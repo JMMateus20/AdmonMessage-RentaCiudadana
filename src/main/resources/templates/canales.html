@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MsjIngresoSolidario</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://cdn.tiny.cloud/1/xlkiyxluqxv4l3rlwklpz4pjj096ys843lzd3sx6ixcjtqtw/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
+    <style>
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background-color: #f8f9fa;
+            z-index: 999; /* Para asegurarse de que siempre esté visible por encima del contenido */
+        }
+        .header img {
+            height: 50px; /* Ajustar el tamaño del logo */
+        }
+        .header .user-icon {
+            font-size: 24px;
+        }
+        .dropdown-menu {
+            right: 0;
+            left: auto;
+            text-align: left;
+        }
+
+        .logout-class{
+            text-align: center;
+            align-content: center;
+        }
+        .user-icon i {
+            cursor: pointer;
+            padding: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .user-icon i:hover {
+            border: 2px solid #007bff; /* Color del borde */
+            border-radius: 50%; /* Bordes redondeados */
+        }
+
+        .container {
+            margin-top: 80px;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            margin: 20px;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .alert {
+            margin-top: 20px;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        .modal.fade .modal-dialog {
+            transition: transform 0.6s ease-out, opacity 0.6s ease-out; /* Controla la velocidad */
+            transform: translateY(-100px); /* Comienza desde arriba */
+            opacity: 0;
+        }
+
+        .modal.show .modal-dialog {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+
+        <img src="/logoBAC.svg.png" alt="Logo">
+        <h1>Administración de mensajes - consulta pagos</h1>
+
+        <div class="user-icon">
+            <i class="fa-solid fa-user" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></i>
+            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                <div class="dropdown-item">
+                    <strong>Nombre:</strong> <span th:text="${nombreUsuario}"></span>
+                </div>
+
+                <div class="dropdown-item">
+                    <strong>VP:</strong> <span th:text="${vicep}"></span>
+                </div>
+                <div class="dropdown-divider"></div>
+                <div class="logout-class">
+                    <form action="/logout" method="post">
+                        <button type="submit" class="btn btn-danger btn-sm">Cerrar sesión</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container">
+
+        <div class="col-md-12 col-sm-12 text-right">
+            <button class="btn btn-primary btn-icon-split text-right" onclick="mostrar_registrar()">
+                                <span class="icon text-white-50">
+                                    <i class="fas fa-plus-circle"></i>
+                                </span>
+                <span class="text">Registrar nuevo canal</span>
+            </button>
+        </div>
+
+        <div class="form-group">
+            <label for="canal">Seleccionar Canal:</label>
+            <select class="form-control" id="canal" name="canal" onchange="actualizarMensaje()">
+                <option value="">Seleccione</option>
+                <option th:each="c : ${canales}"
+                        th:value="${c.id}"
+                        th:text="${c.canal}"
+                        th:data-mensaje="${c.mensaje}"></option>
+            </select>
+
+        </div>
+
+        <div class="form-group">
+            <label for="mensaje">Mensaje:</label>
+            <textarea id="mensaje" name="mensaje" class="form-control" rows="5"></textarea>
+        </div>
+        <div>
+            <button type="button" class="btn btn-primary" id="btnActualizarMensaje" onclick="enviarFormulario()">Establecer mensaje</button>
+        </div>
+
+
+    </div>
+    <div class="modal fade" id="modalCanal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Registrar Canal</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="form-group">
+                            <label for="canalName" class="col-form-label">Nombre:</label>
+                            <input type="text" class="form-control" id="canalName">
+                        </div>
+                        <div class="form-group">
+                            <label for="txtMensaje" class="col-form-label">Mensaje:</label>
+                            <textarea class="form-control" id="txtMensaje"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="btnGuardarCanal">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://kit.fontawesome.com/96137cdb99.js" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!--<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>-->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>
+    <script>
+        $(document).ready(function() {
+
+
+            $('#btnActualizarMensaje').attr("disabled", true);
+        });
+        $('#btnGuardarCanal').click(function(){
+            $('#btnGuardarCanal').attr('disabled', true);
+            var data={
+                canal: $('#canalName').val(),
+                mensaje: tinymce.get('txtMensaje').getContent()
+            };
+            console.log(data);
+
+            $.ajax({
+                url: '/registrar',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function(response){
+                    if (response.Mensaje === 'expirado'){
+                        Swal.fire({
+                            title: 'Sesión expirada',
+                            text: 'Su sesión ha expirado, vuelva a iniciar sesión',
+                            icon: 'error',
+                            confirmButtonText: 'Aceptar'
+                        }).then(() => {
+                            window.location.href='/login';
+                        });
+                    }else{
+                        Swal.fire({
+                            title: response.Titulo,
+                            text: response.Mensaje,
+                            icon: 'success',
+                            confirmButtonText: 'Aceptar'
+                        }).then(() => {
+                            location.reload();
+                        });
+                    }
+
+                },
+                error: function(error){
+                    console.log(error);
+                    Swal.fire({
+                        title: error.responseJSON.Titulo,
+                        text: error.responseJSON.Mensaje,
+                        icon: 'warning'
+                    });
+                }
+            });
+        });
+        $('#canal').on('change', function (){
+            const canalSeleccionado = $('#canal').val();
+            if (canalSeleccionado !== "") {
+                $('#btnActualizarMensaje').attr("disabled", false);
+            } else {
+                $('#btnActualizarMensaje').attr("disabled", true);
+                tinymce.get('mensaje').setContent('');
+            }
+        });
+
+
+        tinymce.init({
+            selector: '#mensaje'
+
+        });
+
+        function actualizarMensaje() {
+            var select = document.getElementById("canal");
+            var mensaje = select.options[select.selectedIndex].getAttribute("data-mensaje");
+            tinymce.get("mensaje").setContent(mensaje);
+        }
+
+        function enviarFormulario(){
+            $('#btnActualizarMensaje').attr("disabled", true);
+
+            const canalId = $('#canal').val();
+            const mensaje = tinymce.get('mensaje').getContent();
+
+            $.ajax({
+                url: '/actualizar',
+                type: 'POST',
+                data: {
+                    canal: canalId,
+                    mensaje: mensaje
+                },
+                success: function(response) {
+                    if (response.Mensaje === 'expirado'){
+                        Swal.fire({
+                            title: 'Sesión expirada',
+                            text: 'Su sesión ha expirado, vuelva a iniciar sesión',
+                            icon: 'error',
+                            confirmButtonText: 'Aceptar'
+                        }).then(() => {
+                            window.location.href='/login';
+                        });
+                    }else{
+                        var titulo=response.Titulo;
+                        console.log(titulo);
+                        if (titulo==="Exito"){
+                            Swal.fire({
+                                title: response.Titulo,
+                                text: response.Mensaje,
+                                icon: 'success',
+                                confirmButtonText: 'Aceptar'
+                            }).then(() => {
+                                location.reload();
+                            });
+                        }else{
+                            Swal.fire({
+                                title: response.Titulo,
+                                text: response.Mensaje,
+                                icon: 'error'
+                            });
+                            $('#btnActualizarMensaje').attr("disabled", false);
+                        }
+                    }
+
+
+
+                },
+                error: function(){
+                    Swal.fire({
+                        title: "Error",
+                        text: "Error al actualizar",
+                        icon: 'error'
+                    })
+                    $('#btnActualizarMensaje').attr("disabled", false);
+                }
+            });
+        }
+
+        function mostrar_registrar() {
+            tinymce.init({
+                selector: '#txtMensaje',
+                height: 300,
+                width: 470
+            });
+            $('#modalCanal').modal('show');
+        }
+
+
+    </script>
+
+
+
+
+
+
+</body>
+</html>

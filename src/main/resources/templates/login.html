@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .login-container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+        .login-container img {
+            width: 100%;
+            max-width: 400px;
+            margin-bottom: 20px;
+        }
+        .login-container h2 {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .login-container input {
+            margin-bottom: 20px;
+        }
+        #btnLogin {
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <img src="/logoapp.png" alt="Logo" />
+
+        <h2>Iniciar Sesión</h2>
+        <form>
+            <div class="form-group">
+                <label for="username">Username:</label>
+                <input type="text" class="form-control" id="username" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" class="form-control" id="password" name="password" required>
+            </div>
+
+            <button type="button" class="btn btn-primary" id="btnLogin">Login</button>
+        </form>
+
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>
+    <script>
+        $('#btnLogin').click(function(){
+
+           if ($('#username').val()=== '' || $('#username')===null || $('#password').val()==='' || $('#password')===null){
+               Swal.fire({
+                   title: 'Advertencia',
+                   text: 'Debe diligenciar todos los campos',
+                   icon: 'warning'
+               });
+           }else{
+               $('#btnLogin').attr('disabled', true);
+               var datosOAuth = {
+                   grant_type: 'password',
+                   username: 'usr_votacion',
+                   password: 'Votacion.*2024'
+               };
+               var datosLogin={
+                   usuario: $('#username').val(),
+                   password: $('#password').val()
+               };
+               $.ajax({
+                   url: '/proxy/token',
+                   type: 'POST',
+                   data: $.param(datosOAuth),
+                   success: function(response) {
+                       //console.log('respuesta:', response.access_token);
+                       var token=response.access_token;
+
+                       $.ajax({
+                            url: '/proxy/directorioActivoApi',
+                            type: 'POST',
+                            contentType: 'application/json',
+                            data: JSON.stringify(datosLogin),
+                            headers: {
+                                'Authorization': 'Bearer ' + token
+                            },
+                            success: function(response2){
+                                console.log(response2);
+                                if (response2.Response==="Success"){
+                                    var memberOf=response2.memberOf;
+                                    if (memberOf.includes("CN=Perfil_General")){
+                                        window.location.href='/canales';
+                                    }else{
+                                        Swal.fire({
+                                            title: 'Error',
+                                            text: 'No posee los permisos necesarios',
+                                            icon: 'error'
+                                        });
+                                        $('#username').val('');
+                                        $('#password').val('');
+                                        $('#btnLogin').attr('disabled', false);
+
+                                    }
+                                }else{
+                                    Swal.fire({
+                                        title: 'Error',
+                                        text: response2.Response,
+                                        icon: 'error'
+                                    });
+                                    $('#username').val('');
+                                    $('#password').val('');
+                                    $('#btnLogin').attr('disabled', false);
+                                }
+
+                            },
+                           error: function(xhr, status, error){
+                                console.error(error);
+                           }
+
+
+
+                       });
+                   },
+                   error: function(xhr, status, error) {
+                       console.error('Error:', error);
+                   }
+               });
+           }
+        });
+
+    </script>
+</body>
+</html>
